@@ -2,6 +2,7 @@
   --foreground-rgb: 40, 50, 70;
   --background-start-rgb: 220, 220, 220;
   --background-end-rgb: 200, 200, 200;
+  --icon-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
 }
 
 * {
@@ -76,6 +77,27 @@ a {
 
 .float-animation {
   animation: float 3s ease-in-out infinite;
+}
+
+/* Background Icon Animations */
+.background-icon {
+  filter: drop-shadow(var(--icon-shadow));
+  transition: all 0.3s ease-in-out;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Full screen wave effect */
+.wave-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 /* Clean, minimal scrollbar */

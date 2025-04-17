@@ -93,7 +93,7 @@ const LoginForm = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        style={{ width: '100%', maxWidth: 400, zIndex: 10 }}
+        style={{ width: '100%', maxWidth: 400, zIndex: 10, position: 'relative' }}
       >
         <Card
           elevation={6}
@@ -102,7 +102,7 @@ const LoginForm = () => {
             overflow: 'hidden',
             borderRadius: 4,
             backgroundColor: '#fff',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
           }}
         >
           <CardContent sx={{ p: 4 }}>
