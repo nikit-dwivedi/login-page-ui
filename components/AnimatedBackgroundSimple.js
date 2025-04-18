@@ -59,7 +59,7 @@ const AnimatedBackgroundSimple = () => {
     // Increased particle count for more clusters
     const maxParticles = 200;
     const maxConnections = 1000; // Increased max connections
-    const connectionDistance = 180; // Slightly increased connection distance
+    const connectionDistance = 300; // Slightly increased connection distance
 
     // Particles and connections
     let particles = [];
@@ -106,7 +106,7 @@ const AnimatedBackgroundSimple = () => {
 
       // Create initial connections
       createInitialConnections();
-      
+
       // Add some cross-cluster connections for a more interconnected network
       createCrossClusterConnections();
     };
@@ -114,40 +114,48 @@ const AnimatedBackgroundSimple = () => {
     // Create cross-cluster connections for a more interconnected network
     const createCrossClusterConnections = () => {
       // Number of cross-cluster connections to create
-      const numCrossConnections = Math.min(maxConnections - connections.length, 200);
-      
+      const numCrossConnections = Math.min(
+        maxConnections - connections.length,
+        200
+      );
+
       for (let i = 0; i < numCrossConnections; i++) {
         // Get two random particles from different clusters
         if (particles.length < 2) break;
-        
+
         // Select first particle
-        const particleA = particles[Math.floor(Math.random() * particles.length)];
-        
+        const particleA =
+          particles[Math.floor(Math.random() * particles.length)];
+
         // Find particles in different clusters within extended distance
-        const potentialParticles = particles.filter(p => {
+        const potentialParticles = particles.filter((p) => {
           // Must be from different cluster
           if (p.clusterIndex === particleA.clusterIndex) return false;
-          
+
           // Check distance
           const dx = p.x - particleA.x;
           const dy = p.y - particleA.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
+
           // Use a slightly larger distance for cross-cluster
           return distance < connectionDistance * 1.5;
         });
-        
+
         if (potentialParticles.length === 0) continue;
-        
+
         // Select second particle
-        const particleB = potentialParticles[Math.floor(Math.random() * potentialParticles.length)];
-        
+        const particleB =
+          potentialParticles[
+            Math.floor(Math.random() * potentialParticles.length)
+          ];
+
         // Check if connection already exists
-        const connectionExists = connections.some(conn => 
-          (conn.from === particleA && conn.to === particleB) || 
-          (conn.from === particleB && conn.to === particleA)
+        const connectionExists = connections.some(
+          (conn) =>
+            (conn.from === particleA && conn.to === particleB) ||
+            (conn.from === particleB && conn.to === particleA)
         );
-        
+
         if (!connectionExists) {
           // Create connection with slightly thinner lines for cross-cluster
           connections.push({
@@ -156,7 +164,9 @@ const AnimatedBackgroundSimple = () => {
             // Blend the colors of both particles for cross-cluster connections
             color: blendColors(particleA.color, particleB.color),
             width: Math.random() * 0.4 + 0.2, // Thinner than in-cluster connections
-            isCrossCluster: true
+            isCrossCluster: true,
+            highlight: 1.0, // Start with full highlight
+            highlightFade: 0.01, // Slower fade for cross-cluster highlights
           });
         }
       }
@@ -227,6 +237,8 @@ const AnimatedBackgroundSimple = () => {
                 to: particleB,
                 color: particleA.color,
                 width: Math.random() * 0.8 + 0.3,
+                highlight: 1.0, // Start with full highlight
+                highlightFade: 0.02, // Fade speed per frame
               });
             }
           }
@@ -305,11 +317,15 @@ const AnimatedBackgroundSimple = () => {
       connections.push({
         from: particleA,
         to: particleB,
-        color: isCrossCluster ? 
-          blendColors(particleA.color, particleB.color) : 
-          particleA.color,
-        width: Math.random() * (isCrossCluster ? 0.4 : 0.7) + (isCrossCluster ? 0.2 : 0.3),
-        isCrossCluster: isCrossCluster
+        color: isCrossCluster
+          ? blendColors(particleA.color, particleB.color)
+          : particleA.color,
+        width:
+          Math.random() * (isCrossCluster ? 0.4 : 0.7) +
+          (isCrossCluster ? 0.2 : 0.3),
+        isCrossCluster: isCrossCluster,
+        highlight: 1.0, // Start with full highlight
+        highlightFade: 0.02, // Fade speed per frame
       });
       
       return true;
@@ -416,9 +432,9 @@ const AnimatedBackgroundSimple = () => {
         // Only draw connection if within current threshold
         if (distance <= currentConnectionDistance) {
           // Calculate opacity based on distance and network size
-          const distanceFactor = 1 - (distance / currentConnectionDistance);
+          const distanceFactor = 1 - distance / currentConnectionDistance;
           const opacityFactor = distanceFactor * network.size * 0.7;
-          
+
           // Simple straight line connections
           ctx.beginPath();
           ctx.moveTo(fromX, fromY);
@@ -427,6 +443,25 @@ const AnimatedBackgroundSimple = () => {
           ctx.lineWidth = connection.width * (0.5 + network.size * 0.8); // Line width varies with network
           ctx.globalAlpha = Math.max(0.1, Math.min(0.6, opacityFactor)); // Keep opacity between 0.1-0.6
           ctx.stroke();
+
+          // Draw highlight effect on new connections
+          if (connection.highlight > 0) {
+            // Draw a gold/bright highlight over the connection
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = brandColors.gold; // Use gold color for highlight
+            ctx.lineWidth =
+              connection.width *
+              (0.5 + network.size * 0.8) *
+              (1 + connection.highlight);
+            ctx.globalAlpha = connection.highlight * 0.7;
+            ctx.stroke();
+
+            // Reduce highlight for next frame
+            connection.highlight -= connection.highlightFade;
+          }
+
           ctx.globalAlpha = 1;
         }
       });
