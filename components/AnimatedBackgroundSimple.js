@@ -8,18 +8,43 @@ const AnimatedBackgroundSimple = () => {
   const canvasRef = useRef(null)
   const animationRef = useRef(null)
   
-  // Brand colors
+  // UI-matching colors
   const brandColors = {
-    primaryBlue: '#4E7CFF',
-    secondaryPurple: '#7B61FF',
-    deepBlue: '#0D1627',
-    lightBlue: '#B4C9F9',
+    primaryBlue: '#1a75cb',
+    secondaryBlue: '#4E7CFF',
+    accentBlue: '#627fff',
+    darkBlue: '#1e293b',
     gold: '#d4a650',
+    lightBlue: '#9dc1e8',
+    backgroundDark: '#00142d'
   }
 
   useEffect(() => {
     setMounted(true)
   }, [])
+  
+  // Network animation state
+  const networkState = useRef({
+    phase: 'growing',  // 'growing' or 'shrinking'
+    size: 0,           // Current size factor (0-1)
+    maxSize: 1,        // Maximum size factor
+    minSize: 0.3,      // Minimum size factor
+    growSpeed: 0.005,  // Speed of growth
+    shrinkSpeed: 0.003 // Speed of shrinking
+  })
+  
+  // Connection creation cycle control
+  const connectionCycle = useRef({
+    timer: 0,                  // Current timer value
+    createInterval: 15,       // Create connections every X frames
+    burstSize: 10,             // How many connections to create at once
+    removeInterval: 200,       // Remove connections every X frames
+    removeBurstSize: 3,       // How many connections to remove at once
+    phase: 'create',          // Current phase ('create' or 'remove')
+    createDuration: 1000,      // How many frames to stay in create phase
+    removeDuration: 10,      // How many frames to stay in remove phase
+    phaseTimer: 0             // Timer for current phase
+  })
   
   useEffect(() => {
     if (!mounted || !canvasRef.current) return;
@@ -33,8 +58,8 @@ const AnimatedBackgroundSimple = () => {
 
     // Increased particle count for more clusters
     const maxParticles = 200;
-    const maxConnections = 600;
-    const connectionDistance = 150;
+    const maxConnections = 1000; // Increased max connections
+    const connectionDistance = 180; // Slightly increased connection distance
 
     // Particles and connections
     let particles = [];
@@ -81,8 +106,72 @@ const AnimatedBackgroundSimple = () => {
 
       // Create initial connections
       createInitialConnections();
+      
+      // Add some cross-cluster connections for a more interconnected network
+      createCrossClusterConnections();
     };
 
+    // Create cross-cluster connections for a more interconnected network
+    const createCrossClusterConnections = () => {
+      // Number of cross-cluster connections to create
+      const numCrossConnections = Math.min(maxConnections - connections.length, 200);
+      
+      for (let i = 0; i < numCrossConnections; i++) {
+        // Get two random particles from different clusters
+        if (particles.length < 2) break;
+        
+        // Select first particle
+        const particleA = particles[Math.floor(Math.random() * particles.length)];
+        
+        // Find particles in different clusters within extended distance
+        const potentialParticles = particles.filter(p => {
+          // Must be from different cluster
+          if (p.clusterIndex === particleA.clusterIndex) return false;
+          
+          // Check distance
+          const dx = p.x - particleA.x;
+          const dy = p.y - particleA.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Use a slightly larger distance for cross-cluster
+          return distance < connectionDistance * 1.5;
+        });
+        
+        if (potentialParticles.length === 0) continue;
+        
+        // Select second particle
+        const particleB = potentialParticles[Math.floor(Math.random() * potentialParticles.length)];
+        
+        // Check if connection already exists
+        const connectionExists = connections.some(conn => 
+          (conn.from === particleA && conn.to === particleB) || 
+          (conn.from === particleB && conn.to === particleA)
+        );
+        
+        if (!connectionExists) {
+          // Create connection with slightly thinner lines for cross-cluster
+          connections.push({
+            from: particleA,
+            to: particleB,
+            // Blend the colors of both particles for cross-cluster connections
+            color: blendColors(particleA.color, particleB.color),
+            width: Math.random() * 0.4 + 0.2, // Thinner than in-cluster connections
+            isCrossCluster: true
+          });
+        }
+      }
+    };
+    
+    // Blend two colors with simple averaging (for cross-cluster connections)
+    const blendColors = (color1, color2) => {
+      try {
+        // Simple implementation - just use one of the colors
+        return Math.random() < 0.5 ? color1 : color2;
+      } catch (e) {
+        return brandColors.primaryBlue; // Fallback
+      }
+    };
+    
     // Create some initial connections
     const createInitialConnections = () => {
       // Group particles by cluster
@@ -100,8 +189,8 @@ const AnimatedBackgroundSimple = () => {
         for (let i = 0; i < clusterParticles.length; i++) {
           const particleA = clusterParticles[i];
 
-          // Connect to 1-2 other particles in same cluster
-          const connectCount = Math.floor(Math.random() * 2) + 1;
+          // Connect to 2-4 other particles in same cluster
+          const connectCount = Math.floor(Math.random() * 3) + 4;
 
           for (let j = 0; j < connectCount; j++) {
             if (connections.length >= maxConnections) break;
@@ -145,24 +234,146 @@ const AnimatedBackgroundSimple = () => {
       });
     };
 
-    // Get random brand color
+    // Get random brand color matching UI
     const getRandomColor = () => {
       const colors = [
         brandColors.primaryBlue,
-        brandColors.secondaryPurple,
+        brandColors.secondaryBlue,
+        brandColors.accentBlue,
         brandColors.lightBlue,
         brandColors.gold,
       ];
-      return colors[Math.floor(Math.random() * colors.length)];
+      // Weighted distribution: more blues, less gold
+      const weights = [0.25, 0.25, 0.25, 0.15, 0.1]; // 90% blues, 10% gold
+      
+      // Generate random number
+      const random = Math.random();
+      let sum = 0;
+      
+      // Select color based on weight
+      for (let i = 0; i < weights.length; i++) {
+        sum += weights[i];
+        if (random < sum) {
+          return colors[i];
+        }
+      }
+      
+      return colors[0]; // Fallback
     };
 
-    // Animation loop - ultra simplified for performance
+    // Function to create a random connection
+    const createRandomConnection = (sizeFactor) => {
+      if (particles.length < 2) return false;
+      
+      // Find two random particles to connect
+      const particleA = particles[Math.floor(Math.random() * particles.length)];
+      
+      // Find particles within connection distance
+      const potentialParticles = particles.filter(p => {
+        if (p === particleA) return false;
+        
+        // Check if already connected
+        const alreadyConnected = connections.some(conn => 
+          (conn.from === particleA && conn.to === p) || 
+          (conn.from === p && conn.to === particleA)
+        );
+        
+        if (alreadyConnected) return false;
+        
+        // Check distance
+        const dx = p.x - particleA.x;
+        const dy = p.y - particleA.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Use current network size to determine connection distance
+        const currentDist = connectionDistance * sizeFactor;
+        
+        // 30% chance to create cross-cluster connections (longer range)
+        const isCrossCluster = p.clusterIndex !== particleA.clusterIndex;
+        const distanceFactor = isCrossCluster ? 1.5 : 1.0;
+        
+        return distance < currentDist * distanceFactor;
+      });
+      
+      if (potentialParticles.length === 0) return false;
+      
+      // Select second particle
+      const particleB = potentialParticles[Math.floor(Math.random() * potentialParticles.length)];
+      
+      // Create the connection
+      const isCrossCluster = particleA.clusterIndex !== particleB.clusterIndex;
+      connections.push({
+        from: particleA,
+        to: particleB,
+        color: isCrossCluster ? 
+          blendColors(particleA.color, particleB.color) : 
+          particleA.color,
+        width: Math.random() * (isCrossCluster ? 0.4 : 0.7) + (isCrossCluster ? 0.2 : 0.3),
+        isCrossCluster: isCrossCluster
+      });
+      
+      return true;
+    };
+
+    // Animation loop with growing/shrinking effect
     const animate = () => {
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Schedule next frame first
       animationRef.current = requestAnimationFrame(animate);
+      
+      // Update network size based on current phase
+      const network = networkState.current;
+      if (network.phase === 'growing') {
+        network.size += network.growSpeed;
+        
+        if (network.size >= network.maxSize) {
+          network.size = network.maxSize;
+          network.phase = 'shrinking';
+        }
+      } else { // shrinking
+        network.size -= network.shrinkSpeed;
+                
+        if (network.size <= network.minSize) {
+          network.size = network.minSize;
+          network.phase = 'growing';
+        }
+      }
+      
+      // Handle connection creation/removal cycle
+      const cycle = connectionCycle.current;
+      cycle.timer++;
+      cycle.phaseTimer++;
+      
+      // Check if we need to switch phases
+      if (cycle.phase === 'create' && cycle.phaseTimer >= cycle.createDuration) {
+        cycle.phase = 'remove';
+        cycle.phaseTimer = 0;
+      } else if (cycle.phase === 'remove' && cycle.phaseTimer >= cycle.removeDuration) {
+        cycle.phase = 'create';
+        cycle.phaseTimer = 0;
+      }
+      
+      // Create connections in bursts during create phase
+      if (cycle.phase === 'create' && cycle.timer % cycle.createInterval === 0) {
+        // Create a burst of connections
+        for (let i = 0; i < cycle.burstSize && connections.length < maxConnections; i++) {
+          createRandomConnection(network.size);
+        }
+      }
+      
+      // Remove connections in bursts during remove phase
+      if (cycle.phase === 'remove' && cycle.timer % cycle.removeInterval === 0) {
+        // Remove a burst of connections
+        for (let i = 0; i < cycle.removeBurstSize && connections.length > 0; i++) {
+          const connectionIndex = Math.floor(Math.random() * connections.length);
+          connections.splice(connectionIndex, 1);
+        }
+      }
+      
+      // Calculate current connection distance based on network size
+      const currentConnectionDistance = connectionDistance * network.size;
 
       // Update particles
       particles.forEach((particle) => {
@@ -183,28 +394,41 @@ const AnimatedBackgroundSimple = () => {
         particle.y = Math.max(0, Math.min(canvas.height, particle.y));
 
         // Draw particle (simple circle, no gradients)
+        const displaySize = particle.size * (0.8 + network.size * 0.4); // Size varies with network
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.arc(particle.x, particle.y, displaySize, 0, Math.PI * 2);
         ctx.fillStyle = particle.color;
         ctx.fill();
       });
 
-      // Draw connections
+      // Draw only connections within the current distance threshold
       connections.forEach((connection) => {
         const fromX = connection.from.x;
         const fromY = connection.from.y;
         const toX = connection.to.x;
         const toY = connection.to.y;
-
-        // Simple straight line connections
-        ctx.beginPath();
-        ctx.moveTo(fromX, fromY);
-        ctx.lineTo(toX, toY);
-        ctx.strokeStyle = connection.color;
-        ctx.lineWidth = connection.width;
-        ctx.globalAlpha = 0.5; // Reduced opacity
-        ctx.stroke();
-        ctx.globalAlpha = 1;
+        
+        // Calculate actual distance between points
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only draw connection if within current threshold
+        if (distance <= currentConnectionDistance) {
+          // Calculate opacity based on distance and network size
+          const distanceFactor = 1 - (distance / currentConnectionDistance);
+          const opacityFactor = distanceFactor * network.size * 0.7;
+          
+          // Simple straight line connections
+          ctx.beginPath();
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(toX, toY);
+          ctx.strokeStyle = connection.color;
+          ctx.lineWidth = connection.width * (0.5 + network.size * 0.8); // Line width varies with network
+          ctx.globalAlpha = Math.max(0.1, Math.min(0.6, opacityFactor)); // Keep opacity between 0.1-0.6
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
       });
     };
 
@@ -243,7 +467,7 @@ const AnimatedBackgroundSimple = () => {
           width: '100%',
           height: '100%',
           zIndex: 0,
-          background: '#00142d',
+          background: brandColors.backgroundDark,
           overflow: 'hidden',
         }}
       />
