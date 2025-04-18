@@ -101,17 +101,23 @@ const LoginForm = () => {
         width: '100%',
         overflow: 'hidden',
         borderRadius: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backgroundColor: 'rgba(14, 22, 40, 0.75)',
         backdropFilter: 'blur(10px)',
-          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.25)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
               transition: 'all 0.3s ease-in-out',
+              display: 'flex',
+              flexDirection: 'column',
               '&:hover': {
                 transform: 'translateY(-5px)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.25)',
+                '& .login-button': {
+                  transform: 'translateY(-5px)',
+                }
               }
             }}
         >
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: 4, pb: 0 }}>
             {/* Logo and header */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               <motion.div 
@@ -124,19 +130,19 @@ const LoginForm = () => {
                   <Box 
                     sx={{ 
                       bgcolor: '#1a75cb',
-                      width: '60px',
-                      height: '60px',
+                      width: '48px',
+                      height: '48px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: '50%',
                       mx: 'auto',
                       mb: 2,
-                      boxShadow: '0 8px 20px rgba(26, 117, 203, 0.25)',
+                      boxShadow: '0 5px 15px rgba(26, 117, 203, 0.15)',
                       background: 'linear-gradient(135deg, #1a75cb 0%, #4E7CFF 100%)',
                     }}
                 >
-                  <Typography variant="h4" component="span" sx={{ color: 'white', fontWeight: 'bold' }}>
+                  <Typography variant="h5" component="span" sx={{ color: 'white', fontWeight: 'bold' }}>
                     F
                   </Typography>
                 </Box>
@@ -147,8 +153,8 @@ const LoginForm = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <Typography variant="h4" component="h1" sx={{ 
-                  color: '#1e293b', 
+                <Typography variant="h5" component="h1" sx={{ 
+                  color: '#ffffff', 
                   fontWeight: 'bold',
                   mb: 0.5
                 }}>
@@ -162,7 +168,7 @@ const LoginForm = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
                 <Typography variant="subtitle2" sx={{ 
-                  color: '#64748b', 
+                  color: '#9dc1e8', 
                   letterSpacing: 1.5,
                   mb: 3
                 }}>
@@ -190,7 +196,7 @@ const LoginForm = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Email sx={{ color: '#94a3b8' }} />
+                          <Email sx={{ color: '#9dc1e8' }} />
                         </InputAdornment>
                       ),
                     }}
@@ -198,16 +204,16 @@ const LoginForm = () => {
                       '& .MuiOutlinedInput-root': {
                         height: 52,
                         borderRadius: 28,
-                        backgroundColor: '#f8fafc',
-                        color: '#334155',
+                        backgroundColor: 'rgba(30, 39, 67, 0.4)',
+                        color: '#ffffff',
                         '& fieldset': {
-                          borderColor: '#e2e8f0',
+                          borderColor: 'rgba(255, 255, 255, 0.1)',
                         },
                         '&:hover fieldset': {
-                          borderColor: '#cbd5e1',
+                          borderColor: 'rgba(255, 255, 255, 0.2)',
                         },
                         '&.Mui-focused fieldset': {
-                          borderColor: '#cbd5e1',
+                          borderColor: '#4E7CFF',
                           borderWidth: 1,
                         },
                       },
@@ -238,7 +244,7 @@ const LoginForm = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Lock sx={{ color: '#94a3b8' }} />
+                          <Lock sx={{ color: '#9dc1e8' }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -247,7 +253,7 @@ const LoginForm = () => {
                             aria-label="toggle password visibility"
                             onClick={() => setShowPassword(!showPassword)}
                             edge="end"
-                            sx={{ color: '#94a3b8' }}
+                            sx={{ color: '#9dc1e8' }}
                           >
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
@@ -258,16 +264,16 @@ const LoginForm = () => {
                       '& .MuiOutlinedInput-root': {
                         height: 52,
                         borderRadius: 28,
-                        backgroundColor: '#f8fafc',
-                        color: '#334155',
+                        backgroundColor: 'rgba(30, 39, 67, 0.4)',
+                        color: '#ffffff',
                         '& fieldset': {
-                          borderColor: '#e2e8f0',
+                          borderColor: 'rgba(255, 255, 255, 0.1)',
                         },
                         '&:hover fieldset': {
-                          borderColor: '#cbd5e1',
+                          borderColor: 'rgba(255, 255, 255, 0.2)',
                         },
                         '&.Mui-focused fieldset': {
-                          borderColor: '#cbd5e1',
+                          borderColor: '#4E7CFF',
                           borderWidth: 1,
                         },
                       },
@@ -291,11 +297,11 @@ const LoginForm = () => {
                     type="button"
                     variant="body2"
                     sx={{ 
-                      color: '#94a3b8', 
+                      color: '#9dc1e8', 
                       textDecoration: 'none',
                       fontSize: '0.75rem',
                       '&:hover': {
-                        color: '#64748b',
+                        color: '#ffffff',
                       }
                     }}
                   >
@@ -304,46 +310,59 @@ const LoginForm = () => {
                 </Box>
               </motion.div>
 
-              {/* Login button */}
-              <motion.div
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  disabled={loading}
-                  sx={{
-                    py: 1.5,
-                    backgroundColor: '#627fff',
-                    color: 'white',
-                    borderRadius: 28,
-                    textTransform: 'none',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 10px rgba(98, 127, 255, 0.3)',
-                    '&:hover': {
-                      backgroundColor: '#4c6af5',
-                    },
-                    '&.Mui-disabled': {
-                      backgroundColor: '#9dc1e8',
-                      color: 'rgba(255,255,255,0.8)',
-                    }
-                  }}
-                >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    'Log In'
-                  )}
-                </Button>
-              </motion.div>
+              {/* Login button will be outside CardContent */}
             </form>
           </CardContent>
+          
+          {/* Login button - Full width at bottom of card */}
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="login-button"
+            style={{ 
+              marginTop: 'auto', 
+              transition: 'transform 0.3s ease-in-out',
+              width: '100%'
+            }}
+          >
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+              onClick={handleLogin}
+              sx={{
+                py: 1.6,
+                mt: 0,
+                backgroundColor: '#4E7CFF',
+                color: 'white',
+                borderRadius: 0,
+                borderBottomLeftRadius: '16px',
+                borderBottomRightRadius: '16px',
+                textTransform: 'none',
+                fontWeight: '500',
+                fontSize: '1rem',
+                boxShadow: 'none',
+                margin: 0,
+                width: '100%',
+                position: 'relative',
+                '&:hover': {
+                  backgroundColor: '#4c6af5',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#9dc1e8',
+                  color: 'rgba(255,255,255,0.8)',
+                }
+              }}
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Log In'
+              )}
+            </Button>
+          </motion.div>
         </Card>
       </motion.div>
     </Box>
