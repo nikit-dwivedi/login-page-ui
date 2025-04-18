@@ -27,7 +27,7 @@
           particle.interactionFactor *= 0.95
         }
       })
-    }"use client"
+    }
 
 import { useEffect, useState, useRef } from 'react'
 import { Box } from '@mui/material'
