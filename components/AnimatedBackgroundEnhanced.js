@@ -1,44 +1,14 @@
-    // Add mouse interaction to particle movement
-    const applyMouseInteraction = () => {
-      if (!mouseRef.current || interactionStrength <= 0) return
-      
-      const { x: mouseX, y: mouseY } = mouseRef.current
-      const interactionRadius = 150 // Radius of influence around mouse
-      
-      particles.forEach(particle => {
-        const dx = particle.x - mouseX
-        const dy = particle.y - mouseY
-        const distance = Math.sqrt(dx * dx + dy * dy)
-        
-        // Only affect particles within interaction radius
-        if (distance < interactionRadius) {
-          // Calculate interaction strength based on distance
-          const force = interactionStrength * (1 - distance / interactionRadius)
-          
-          // Push particle away from cursor
-          const angle = Math.atan2(dy, dx)
-          particle.x += Math.cos(angle) * force * 2
-          particle.y += Math.sin(angle) * force * 2
-          
-          // Increase particle interactionFactor for visual effects
-          particle.interactionFactor = force
-        } else {
-          // Gradually reduce interaction factor
-          particle.interactionFactor *= 0.95
-        }
-      })
-    }"use client"
+"use client"
 
 import { useEffect, useState, useRef } from 'react'
 import { Box } from '@mui/material'
 import { motion } from 'framer-motion'
-import { createRippleEffect, updateRipples, clearRipples } from './rippleEffect'
-import { createRippleEffect, updateRipples, clearRipples } from './rippleEffect'
 
-const AnimatedBackground = () => {
+const AnimatedBackgroundEnhanced = () => {
   const [mounted, setMounted] = useState(false)
   const canvasRef = useRef(null)
   const animationRef = useRef(null)
+  
   // Track mouse position for interactive effects
   const mouseRef = useRef({ x: 0, y: 0 })
   const [interactionStrength, setInteractionStrength] = useState(0)
@@ -97,16 +67,17 @@ const AnimatedBackground = () => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     
-    // Particle & network properties
+    // Particle & network properties - significantly reduced numbers for smoother performance
     let particles = []
     let connections = []
     let orbs = []
-    const maxParticles = 85        // Increased number of particles
-    const maxConnections = 60      // Increased max connections
-    const maxOrbs = 8
-    const connectionThreshold = 200 // Increased connection distance
-    const connectionLifespan = 180  // Longer connection lifespan
-    const meshNetworkSize = 5       // Number of particles in mesh networks
+    let rippleEffects = [] // Array to store ripple effects
+    const maxParticles = 45        // Reduced from 85 for better performance
+    const maxConnections = 25      // Reduced from 60 for better performance
+    const maxOrbs = 4              // Reduced from 8 for better performance
+    const connectionThreshold = 150 // Reduced from 200 for less processing
+    const connectionLifespan = 180  // Keep longer connection lifespan
+    const meshNetworkSize = 3       // Reduced from 5 for simpler mesh calculations
     
     // Initialize particles and network
     const initializeParticlesAndNetwork = () => {
@@ -114,8 +85,8 @@ const AnimatedBackground = () => {
       particles = []
       
       // Create clusters of particles for blob-like formations
-      // First, determine cluster centers
-      const numClusters = 6 // Number of particle clusters
+      // First, determine cluster centers - reduced number of clusters for better performance
+      const numClusters = 4 // Reduced from 6 for better performance
       const clusterCenters = []
       
       for (let i = 0; i < numClusters; i++) {
@@ -174,7 +145,7 @@ const AnimatedBackground = () => {
           speedY: (Math.random() - 0.5) * speed,
           baseSpeed: speed, // Store original speed for reference
           opacity: Math.random() * 0.3 + opacity,
-          color: clusterCenters[clusterIndex].color, // Use cluster's color with variation
+          color: cluster.color, // Use cluster's color with variation
           baseColor: getRandomColor(), // Store original color for influence effects
           type: type,
           maxConnections: type === 'normal' ? 5 : (type === 'fast' ? 3 : 8), // Increase max connections
@@ -335,101 +306,159 @@ const AnimatedBackground = () => {
       return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
     }
     
-    // Update particle properties based on nearby particles
-    const updateParticleInfluences = () => {
-      // First, identify nearby particles for each particle
-      particles.forEach(particle => {
-        particle.nearbyParticles = []
+    // Create a ripple effect at specified position
+    const createRippleEffect = (x, y) => {
+      rippleEffects.push({
+        x: x,
+        y: y,
+        radius: 0,
+        maxRadius: 100 + Math.random() * 50,
+        opacity: 0.6,
+        color: getRandomColor(),
+        speed: 2 + Math.random() * 2
+      });
+      
+      // Limit number of simultaneous ripples
+      if (rippleEffects.length > 5) {
+        rippleEffects.shift();
+      }
+    }
+    
+    // Update and draw ripple effects
+    const updateRipples = () => {
+      // Update and draw all ripples
+      for (let i = rippleEffects.length - 1; i >= 0; i--) {
+        const ripple = rippleEffects[i];
         
-        particles.forEach(otherParticle => {
-          if (particle === otherParticle) return
+        // Expand radius
+        ripple.radius += ripple.speed;
+        
+        // Reduce opacity as radius increases
+        ripple.opacity = Math.max(0, 0.6 * (1 - ripple.radius / ripple.maxRadius));
+        
+        // Draw ripple
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = ripple.color + Math.floor(ripple.opacity * 255).toString(16).padStart(2, '0');
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Remove ripple when it reaches max radius or becomes invisible
+        if (ripple.radius >= ripple.maxRadius || ripple.opacity <= 0.02) {
+          rippleEffects.splice(i, 1);
+        }
+      }
+    }
+    
+    // Add mouse interaction to particle movement
+    const applyMouseInteraction = () => {
+      if (!mouseRef.current || interactionStrength <= 0) return;
+      
+      const { x: mouseX, y: mouseY } = mouseRef.current;
+      const interactionRadius = 150; // Radius of influence around mouse
+      
+      particles.forEach(particle => {
+        const dx = particle.x - mouseX;
+        const dy = particle.y - mouseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only affect particles within interaction radius
+        if (distance < interactionRadius) {
+          // Calculate interaction strength based on distance
+          const force = interactionStrength * (1 - distance / interactionRadius);
+          
+          // Push particle away from cursor
+          const angle = Math.atan2(dy, dx);
+          particle.x += Math.cos(angle) * force * 2;
+          particle.y += Math.sin(angle) * force * 2;
+          
+          // Increase particle interactionFactor for visual effects
+          particle.interactionFactor = force;
+        } else {
+          // Gradually reduce interaction factor
+          particle.interactionFactor *= 0.95;
+        }
+      });
+    }
+    
+    // Optimized update function that doesn't create new arrays every frame
+    const updateParticleInfluences = () => {
+      // Only update a subset of particles each frame for better performance
+      const particlesToUpdate = Math.floor(particles.length * 0.2) // Only update 20% of particles each frame
+      
+      // Pick random particles to update
+      for (let i = 0; i < particlesToUpdate; i++) {
+        const particleIndex = Math.floor(Math.random() * particles.length)
+        const particle = particles[particleIndex]
+        
+        // Skip if this particle was recently updated
+        if (particle.lastInfluenceUpdate && performance.now() - particle.lastInfluenceUpdate < 500) {
+          continue
+        }
+        
+        // Find up to 2 nearby particles from the same cluster for influence
+        let nearbyCount = 0
+        let totalColorInfluence = {r: 0, g: 0, b: 0}
+        let totalSizeInfluence = 0
+        let totalInfluenceWeight = 0
+        
+        // Only check particles in the same cluster for efficiency
+        for (let j = 0; j < particles.length; j++) {
+          if (nearbyCount >= 2) break // Limit checks to 2 particles max
+          
+          const otherParticle = particles[j]
+          if (particle === otherParticle) continue
+          if (particle.clusterIndex !== otherParticle.clusterIndex) continue
           
           const dx = otherParticle.x - particle.x
           const dy = otherParticle.y - particle.y
           const distance = Math.sqrt(dx * dx + dy * dy)
           
-          // Consider particles within influence radius
-          if (distance < connectionThreshold * 0.8) {
-            // Add to nearby particles list with influence weight based on distance
-            particle.nearbyParticles.push({
-              particle: otherParticle,
-              distance: distance,
-              influence: 1 - (distance / (connectionThreshold * 0.8)) // Higher influence for closer particles
-            })
-          }
-        })
-        
-        // Sort nearby particles by influence
-        particle.nearbyParticles.sort((a, b) => b.influence - a.influence)
-      })
-      
-      // Now update particle properties based on nearby particles
-      particles.forEach(particle => {
-        if (particle.nearbyParticles.length === 0) return
-        
-        // Calculate influence factors
-        let totalColorInfluence = {r: 0, g: 0, b: 0}
-        let totalSizeInfluence = 0
-        let totalSpeedInfluence = 0
-        let totalInfluenceWeight = 0
-        
-        // Consider up to 3 nearest particles for influence
-        const influencers = particle.nearbyParticles.slice(0, 3)
-        
-        influencers.forEach(nearby => {
-          const weight = nearby.influence
-          totalInfluenceWeight += weight
-          
-          // Color influence
-          try {
-            const otherColor = hexToRgb(nearby.particle.color)
-            if (otherColor) {
-              totalColorInfluence.r += otherColor.r * weight
-              totalColorInfluence.g += otherColor.g * weight
-              totalColorInfluence.b += otherColor.b * weight
-            }
-          } catch (error) {
-            // Skip color influence if error
-          }
-          
-          // Size influence (larger particles have more influence)
-          const sizeRatio = nearby.particle.size / particle.baseSize
-          totalSizeInfluence += (sizeRatio - 1) * weight * 0.3 // Scale the effect
-          
-          // Speed influence (faster particles speed up slower ones)
-          if (nearby.particle.baseSpeed > particle.baseSpeed) {
-            totalSpeedInfluence += (nearby.particle.baseSpeed / particle.baseSpeed - 1) * weight * 0.2
-          }
-        })
-        
-        if (totalInfluenceWeight > 0) {
-          try {
-            // Apply color influence
-            const baseColor = hexToRgb(particle.baseColor)
-            if (baseColor) {
-              const blendFactor = 0.3 // How much to blend (30%)
-              
-              const blendedColor = {
-                r: Math.round(baseColor.r * (1 - blendFactor) + (totalColorInfluence.r / totalInfluenceWeight) * blendFactor),
-                g: Math.round(baseColor.g * (1 - blendFactor) + (totalColorInfluence.g / totalInfluenceWeight) * blendFactor),
-                b: Math.round(baseColor.b * (1 - blendFactor) + (totalColorInfluence.b / totalInfluenceWeight) * blendFactor)
+          // Consider only very close particles
+          if (distance < connectionThreshold * 0.4) {
+            const influence = 1 - (distance / (connectionThreshold * 0.4))
+            totalInfluenceWeight += influence
+            nearbyCount++
+            
+            // Simple color influence
+            try {
+              const otherColor = hexToRgb(otherParticle.color)
+              if (otherColor) {
+                totalColorInfluence.r += otherColor.r * influence
+                totalColorInfluence.g += otherColor.g * influence
+                totalColorInfluence.b += otherColor.b * influence
               }
-              
-              particle.influenceColor = rgbToHex(blendedColor.r, blendedColor.g, blendedColor.b)
-            }
-          } catch (error) {
-            // Skip color influence if error
+            } catch (error) {}
+            
+            // Simple size influence
+            totalSizeInfluence += (otherParticle.size / particle.baseSize - 1) * influence * 0.2
+          }
+        }
+        
+        // Apply influences if we found nearby particles
+        if (totalInfluenceWeight > 0) {
+          // Apply color influence rarely to reduce processing
+          if (Math.random() < 0.3) {
+            try {
+              const baseColor = hexToRgb(particle.baseColor)
+              if (baseColor) {
+                const blendedColor = {
+                  r: Math.round(baseColor.r * 0.8 + (totalColorInfluence.r / totalInfluenceWeight) * 0.2),
+                  g: Math.round(baseColor.g * 0.8 + (totalColorInfluence.g / totalInfluenceWeight) * 0.2),
+                  b: Math.round(baseColor.b * 0.8 + (totalColorInfluence.b / totalInfluenceWeight) * 0.2)
+                }
+                particle.influenceColor = rgbToHex(blendedColor.r, blendedColor.g, blendedColor.b)
+              }
+            } catch (error) {}
           }
           
-          // Apply size influence - adjust particle size
+          // Apply size influence
           particle.influenceSize = particle.baseSize * (1 + totalSizeInfluence / totalInfluenceWeight)
-          
-          // Apply speed influence - adjust particle speed
-          const speedFactor = 1 + totalSpeedInfluence / totalInfluenceWeight
-          particle.speedX = (particle.speedX / Math.abs(particle.speedX) || 1) * Math.abs(particle.speedX) * speedFactor
-          particle.speedY = (particle.speedY / Math.abs(particle.speedY) || 1) * Math.abs(particle.speedY) * speedFactor
         }
-      })
+        
+        // Track when this particle was last updated
+        particle.lastInfluenceUpdate = performance.now()
+      }
     }
     
     // Helper functions for color manipulation
@@ -660,12 +689,50 @@ const AnimatedBackground = () => {
       }
     }
     
-    // Animate function
+    // Apply parallax effect to clusters
+    const applyParallaxEffect = () => {
+      if (!mouseRef.current) return;
+      
+      const { x: mouseX, y: mouseY } = mouseRef.current;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      // Calculate normalized mouse position (-1 to 1 range)
+      const normalizedX = (mouseX - centerX) / centerX;
+      const normalizedY = (mouseY - centerY) / centerY;
+      
+      // Adjust particles based on their cluster and distance from center
+      particles.forEach(particle => {
+        // Calculate offset based on mouse position and particle's distance from cluster center
+        const offsetFactor = 0.05 * (particle.distanceFromCenter / 100);
+        
+        // Move particle slightly in opposite direction of mouse (parallax effect)
+        particle.x = particle.originalX - normalizedX * offsetFactor * 20;
+        particle.y = particle.originalY - normalizedY * offsetFactor * 20;
+      });
+    }
+    
+    // Animate function with performance optimization
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       
-      // First update particle influences from nearby particles
-      updateParticleInfluences()
+      // Schedule the next animation frame first to ensure continuous animation
+      animationRef.current = requestAnimationFrame(animate)
+      
+      // Apply mouse interactions with reduced frequency
+      if (Math.random() < 0.7) { // Only apply in 70% of frames to reduce CPU load
+        applyMouseInteraction()
+      }
+      
+      // Apply parallax effect with reduced frequency
+      if (Math.random() < 0.5) { // Only apply in 50% of frames
+        applyParallaxEffect()
+      }
+      
+      // First update particle influences from nearby particles - reduce frequency
+      if (Math.random() < 0.3) { // Only update influences occasionally
+        updateParticleInfluences()
+      }
       
       // Draw and update orbs
       drawOrbs()
@@ -678,23 +745,30 @@ const AnimatedBackground = () => {
         
         // Use the influenced size if available, otherwise use baseSize
         const baseDisplaySize = particle.influenceSize > 0 ? particle.influenceSize : particle.size
-        const displaySize = baseDisplaySize * pulseFactor
+        
+        // Apply interaction boost to size for particles affected by mouse
+        const interactionBoost = particle.interactionFactor * 3
+        const displaySize = (baseDisplaySize + interactionBoost) * pulseFactor
         
         // Draw particle with glow effect for particles with many connections
-        if (particle.connections > 2) {
+        if (particle.connections > 2 || particle.interactionFactor > 0.2) {
           // Draw glow
           try {
             const gradient = ctx.createRadialGradient(
               particle.x, particle.y, 0,
               particle.x, particle.y, displaySize * 3
             )
+            
+            // Use interaction factor to boost glow
+            const glowOpacity = Math.min(0.4, 0.2 + particle.interactionFactor)
+            
             gradient.addColorStop(0, (particle.influenceColor || particle.color) + 'A0') // 60% opacity
             gradient.addColorStop(1, (particle.influenceColor || particle.color) + '00') // 0% opacity
             
             ctx.beginPath()
             ctx.arc(particle.x, particle.y, displaySize * 3, 0, Math.PI * 2)
             ctx.fillStyle = gradient
-            ctx.globalAlpha = 0.3
+            ctx.globalAlpha = glowOpacity
             ctx.fill()
           } catch (error) {
             // Skip glow if gradient fails
@@ -724,7 +798,10 @@ const AnimatedBackground = () => {
           ctx.fillStyle = particleColor
         }
         
-        ctx.globalAlpha = particle.opacity
+        // Boost opacity for interactive particles
+        const opacityBoost = particle.interactionFactor * 0.3
+        ctx.globalAlpha = Math.min(1, particle.opacity + opacityBoost)
+        
         ctx.fill()
         
         // Add highlight for larger particles
@@ -751,13 +828,16 @@ const AnimatedBackground = () => {
       // Draw and update connections
       updateConnections()
       
-      // Create new connections more frequently
-      if (Math.random() < 0.06 && connections.length < maxConnections) {
+      // Draw ripple effects
+      updateRipples()
+      
+      // Create new connections less frequently
+      if (Math.random() < 0.02 && connections.length < maxConnections) {
         createConnection()
       }
       
-      // Occasionally create a burst of connections at once
-      if (Math.random() < 0.002) {
+      // Occasionally create a burst of connections once in a while
+      if (Math.random() < 0.0005) {
         const burstSize = Math.floor(Math.random() * 3) + 2
         for (let i = 0; i < burstSize; i++) {
           if (connections.length < maxConnections) {
@@ -765,8 +845,6 @@ const AnimatedBackground = () => {
           }
         }
       }
-      
-      animationRef.current = requestAnimationFrame(animate)
     }
     
     // Draw and update orbs
@@ -997,21 +1075,37 @@ const AnimatedBackground = () => {
       }
     }
     
-    // Set canvas dimensions
+    // Set canvas dimensions with optimized resize handling
     const handleResize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      // Use a timeout to prevent multiple resize events
+      if (window.resizeTimeout) {
+        clearTimeout(window.resizeTimeout)
+      }
       
-      // Reset the particles when canvas is resized
-      initializeParticlesAndNetwork()
+      window.resizeTimeout = setTimeout(() => {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        
+        // Reset the particles when canvas is resized
+        initializeParticlesAndNetwork()
+      }, 250) // Delay to batch resize events
     }
     
-    window.addEventListener('resize', handleResize)
-    handleResize()
+    // Set initial dimensions immediately without delay
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
     
-    // Start animation and flow lines
+    // Initialize particles right away
+    initializeParticlesAndNetwork()
+    
+    // Start animation immediately for continuous effect
     animate()
-    const flowInterval = setInterval(createFlowLines, 1000)
+    
+    // Create flow lines less frequently for better performance
+    const flowInterval = setInterval(createFlowLines, 3000)
+    
+    // Add the resize listener after initial setup
+    window.addEventListener('resize', handleResize)
     
     // Cleanup
     return () => {
@@ -1021,7 +1115,7 @@ const AnimatedBackground = () => {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [mounted])
+  }, [mounted, interactionStrength])
 
   return (
     <>
@@ -1060,4 +1154,4 @@ const AnimatedBackground = () => {
   )
 }
 
-export default AnimatedBackground
+export default AnimatedBackgroundEnhanced

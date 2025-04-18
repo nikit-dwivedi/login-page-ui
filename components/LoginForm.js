@@ -96,14 +96,20 @@ const LoginForm = () => {
         style={{ width: '100%', maxWidth: 400, zIndex: 10, position: 'relative' }}
       >
         <Card
-          elevation={6}
-          sx={{
-            width: '100%',
-            overflow: 'hidden',
-            borderRadius: 4,
-            backgroundColor: '#fff',
-            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.15)',
-          }}
+        elevation={6}
+        sx={{
+        width: '100%',
+        overflow: 'hidden',
+        borderRadius: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(10px)',
+          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.25)',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+              }
+            }}
         >
           <CardContent sx={{ p: 4 }}>
             {/* Logo and header */}
@@ -112,19 +118,23 @@ const LoginForm = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <Box 
-                  sx={{ 
-                    bgcolor: '#1a75cb',
-                    width: '60px',
-                    height: '60px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    mx: 'auto',
-                    mb: 2,
-                  }}
+                  <Box 
+                    sx={{ 
+                      bgcolor: '#1a75cb',
+                      width: '60px',
+                      height: '60px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      mx: 'auto',
+                      mb: 2,
+                      boxShadow: '0 8px 20px rgba(26, 117, 203, 0.25)',
+                      background: 'linear-gradient(135deg, #1a75cb 0%, #4E7CFF 100%)',
+                    }}
                 >
                   <Typography variant="h4" component="span" sx={{ color: 'white', fontWeight: 'bold' }}>
                     F

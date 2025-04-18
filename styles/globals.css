@@ -79,13 +79,14 @@ a {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Background Icon Animations */
-.background-icon {
-  filter: drop-shadow(var(--icon-shadow));
-  transition: all 0.3s ease-in-out;
+/* Dynamic Particles and Flows */
+canvas {
+  will-change: transform;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   perspective: 1000px;
+  filter: blur(0px);
+  transition: filter 0.3s ease;
 }
 
 /* Full screen wave effect */
@@ -98,6 +99,15 @@ a {
   left: 0;
   pointer-events: none;
   overflow: hidden;
+  mix-blend-mode: overlay;
+}
+
+/* Ensure SVG filters render correctly */
+@supports (filter: blur(30px)) {
+  .gradient-meshes path,
+  .gradient-meshes circle {
+    will-change: transform, opacity;
+  }
 }
 
 /* Clean, minimal scrollbar */
