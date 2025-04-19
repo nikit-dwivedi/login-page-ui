@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { 
   Box, 
   Card, 
@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   CircularProgress,
 } from '@mui/material'
+import WelcomeEffect from './WelcomeEffect'
 import { 
   Visibility, 
   VisibilityOff, 
@@ -29,13 +30,13 @@ const LoginForm = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [loginSuccess, setLoginSuccess] = useState(false)
+  const [showWelcomeEffect, setShowWelcomeEffect] = useState(false)
   const [validationErrors, setValidationErrors] = useState({
     email: '',
     password: ''
   })
   
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const buttonRef = useRef(null)
   
   // Simulated authentication
   const handleLogin = (e) => {
@@ -69,12 +70,21 @@ const LoginForm = () => {
     // Reset errors
     setValidationErrors({ email: '', password: '' })
     
-    // Simulate login API call
+    // Start loading and welcome effect
     setLoading(true)
+    setShowWelcomeEffect(true)
+    
+    // Simulate API response
     setTimeout(() => {
       setLoginSuccess(true)
-      setLoading(false)
-    }, 1500)
+      // Keep loading state true for a moment to show success animation
+      setTimeout(() => {
+        setLoading(false)
+    setShowWelcomeEffect(false)
+    setLoginSuccess(false)
+
+      }, 1500)
+    }, 2000)
   }
 
   return (
@@ -88,6 +98,12 @@ const LoginForm = () => {
         p: 2,
       }}
     >
+      {/* Welcome effect */}
+      <WelcomeEffect 
+      show={showWelcomeEffect}
+      success={loginSuccess}
+      onComplete={() => setShowWelcomeEffect(false)}
+      />
       {/* Main login card */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -108,6 +124,7 @@ const LoginForm = () => {
               transition: 'all 0.3s ease-in-out',
               display: 'flex',
               flexDirection: 'column',
+              position: 'relative',
               '&:hover': {
                 transform: 'translateY(-5px)',
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.25)',
@@ -117,6 +134,7 @@ const LoginForm = () => {
               }
             }}
         >
+          {/* Card content */}
           <CardContent sx={{ p: 4, pb: 0 }}>
             {/* Logo and header */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -327,6 +345,7 @@ const LoginForm = () => {
             }}
           >
             <Button
+              ref={buttonRef}
               type="submit"
               fullWidth
               variant="contained"
@@ -347,8 +366,15 @@ const LoginForm = () => {
                 margin: 0,
                 width: '100%',
                 position: 'relative',
+                transition: 'all 0.3s ease',
                 '&:hover': {
                   backgroundColor: '#4c6af5',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(78, 124, 255, 0.3)',
+                },
+                '&:active': {
+                  transform: 'translateY(1px)',
+                  boxShadow: '0 2px 6px rgba(78, 124, 255, 0.2)',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#9dc1e8',
